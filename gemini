@@ -1,0 +1,10 @@
+#!/bin/bash
+args=()
+for arg in "$@"; do
+  if [ "$arg" = "--yolo" ]; then
+    args+=("--dangerously-skip-permissions")
+  else
+    args+=("$arg")
+  fi
+done
+exec /root/.local/bin/agy "${args[@]}"

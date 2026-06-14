@@ -1,0 +1,72 @@
+port: 7890
+socks-port: 7891
+mixed-port: 7892
+allow-lan: true
+mode: rule
+log-level: info
+external-controller: 0.0.0.0:9090
+
+proxies:
+  # =========================================================================
+  # 1. 前置中转节点 (Your High-Speed Transit Node)
+  # Please replace the following fields with your actual proxy server details.
+  # (e.g. Shadowsocks, Trojan, VMess)
+  # =========================================================================
+  - name: "前置中转代理"
+    type: vmess
+    server: transit-node.example.com
+    port: 12345
+    uuid: your-vmess-uuid-here
+    alterId: 2
+    cipher: auto
+    udp: true
+
+  # =========================================================================
+  # 2. 静态住宅 IP 落地节点 (Your Static Residential Exit IP)
+  # Please replace the fields below with your purchased residential IP details.
+  # =========================================================================
+  - name: "静态IP代理"
+    type: socks5
+    server: 192.0.2.1
+    port: 443
+    username: "your_username"
+    password: "your_password"
+    dialer-proxy: "前置中转代理"
+
+proxy-groups:
+  # =========================================================================
+  # 链式代理 (Chain Proxy / Relay Group)
+  # Traffic flows from your NAS -> Transit-Node -> Residential-Exit -> AI API
+  # =========================================================================
+  - name: "AI-Relay-Group"
+    type: select
+    proxies:
+      - "静态IP代理"
+
+  # =========================================================================
+  # 默认代理组 (Default Proxy Group for General Downloads like GitHub / Fonts)
+  # Routes directly through your fast transit node, saving residential IP quota!
+  # =========================================================================
+  - name: "Default-Group"
+    type: select
+    proxies:
+      - "前置中转代理"
+      - "DIRECT"
+
+rules:
+  # Route AI platforms through the pure Residential exit
+  - DOMAIN-SUFFIX,openai.com,AI-Relay-Group
+  - DOMAIN-SUFFIX,anthropic.com,AI-Relay-Group
+  - DOMAIN-SUFFIX,googleapis.com,AI-Relay-Group
+  - DOMAIN-SUFFIX,google.com,AI-Relay-Group
+  - DOMAIN-SUFFIX,google,AI-Relay-Group
+  - DOMAIN-SUFFIX,run.app,AI-Relay-Group
+
+  # Route GitHub and Google Fonts through the high-speed transit node directly
+  - DOMAIN-KEYWORD,github,Default-Group
+  - DOMAIN-SUFFIX,githubusercontent.com,Default-Group
+  - DOMAIN-SUFFIX,gstatic.com,Default-Group
+  - DOMAIN-SUFFIX,googlefonts.com,Default-Group
+  
+  # Default direct access for local NAS services
+  - MATCH,DIRECT

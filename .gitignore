@@ -1,0 +1,13 @@
+# Clash configuration (contains sensitive server URLs and passwords)
+clash/config.yaml
+
+# Local configuration and workspace files
+config/
+workspace/
+
+# macOS system files
+.DS_Store
+
+# Scratch Python script
+list_proc.py
+list_ports.py

@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # 1. Clash (Mihomo) Network Proxy Gateway
+  clash:
+    image: docker.1ms.run/metacubex/mihomo:latest
+    container_name: ai-clash
+    restart: always
+    volumes:
+      - ./clash:/root/.config/mihomo
+    ports:
+      - "7890:7890" # HTTP/HTTPS Proxy
+      - "7891:7891" # SOCKS5 Proxy
+      - "9090:9090" # Web Dashboard (Yacd)
+    networks:
+      - ai-network
+
+  # 1.5 Clash Web Dashboard UI (yacd)
+  clash-ui:
+    image: docker.1ms.run/haishanh/yacd:latest
+    container_name: ai-clash-ui
+    restart: always
+    ports:
+      - "1234:80"
+    networks:
+      - ai-network
+
+  # 2. Botmux (bridges Feishu to agy/codex)
+  botmux:
+    build:
+      context: .
+      network: host
+    container_name: ai-botmux
+    restart: always
+    network_mode: host
+    environment:
+      - HTTP_PROXY=http://127.0.0.1:7890
+      - HTTPS_PROXY=http://127.0.0.1:7890
+      - ALL_PROXY=socks5://127.0.0.1:7891
+      - NO_PROXY=localhost,127.0.0.1
+      - BOTMUX_DASHBOARD_PORT=7895
+    command: bash -c "botmux start && mkdir -p /root/.botmux/logs /root/.botmux/pm2 && touch /root/.botmux/pm2/pm2.log /root/.botmux/logs/daemon-0-out.log /root/.botmux/logs/dashboard-out.log && tail -f /root/.botmux/pm2/pm2.log /root/.botmux/logs/daemon-0-out.log /root/.botmux/logs/dashboard-out.log"
+    volumes:
+      # Mount configuration files to persist logins
+      - ./config/botmux:/root/.botmux
+      - ./config/config:/root/.config
+      - ./config/gemini:/root/.gemini
+      # Mount your NAS workspace directory where your code projects live (Worker folder)
+      - /vol1/1000/Worker:/workspace
+    depends_on:
+      - clash
+
+  # 3. OpenClaw (AI Gateway)
+  openclaw:
+    image: ghcr.nju.edu.cn/openclaw/openclaw:latest
+    container_name: ai-openclaw
+    restart: always
+    environment:
+      - HTTP_PROXY=http://clash:7890
+      - HTTPS_PROXY=http://clash:7890
+    volumes:
+      - ./config/openclaw:/home/node/.openclaw
+    depends_on:
+      - clash
+    networks:
+      - ai-network
+
+networks:
+  ai-network:
+    name: ai-network
+    driver: bridge
