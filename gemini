@@ -7,4 +7,10 @@ for arg in "$@"; do
     args+=("$arg")
   fi
 done
+
+# Pass custom model to agy if configured in environment (e.g. AGY_MODEL="Gemini 3.5 Flash (High)")
+if [ -n "$AGY_MODEL" ]; then
+  args+=("--model" "$AGY_MODEL")
+fi
+
 exec /root/.local/bin/agy "${args[@]}"
