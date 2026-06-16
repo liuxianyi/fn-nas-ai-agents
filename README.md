@@ -37,6 +37,12 @@ fn-nas-ai-agents/
    - /volume1/projects:/workspace
    ```
    将 `/volume1/projects` 替换为您 NAS 上实际存放代码项目的共享文件夹路径。
+5. **配置 agy 模型模式 (可选)**：
+   在 `docker-compose.yml` 的 `botmux` 环境变量中，默认已配置了 `AGY_MODEL=Gemini 3.5 Flash (High)` 来启用高性能模型。
+   如果您需要切换，可以更改为以下值：
+   * `Gemini 3.5 Flash (High)` (推荐，高性能模式)
+   * `Gemini 3.5 Flash (Medium)` (中等性能)
+   * `Gemini 3.5 Flash (Low)` (低性能)
 
 ---
 
@@ -182,4 +188,11 @@ docker compose up -d
     *   **环境代理更正**：主机模式下，更新 `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY` 指向宿主机的 `127.0.0.1:7890` 和 `127.0.0.1:7891`。
     *   **Dashboard 端口冲突处理**：`botmux` 的 dashboard 默认监听 `7891` 端口，这与 Clash 的 SOCKS5 代理端口 `7891` 在主机网络空间上发生碰撞导致 dashboard 不断崩溃重启。我们在 `docker-compose.yml` 环境变量中添加 `BOTMUX_DASHBOARD_PORT=7895`，将 dashboard 监听端口更改为 `7895`，彻底解决了端口冲突。
     *   **镜像内置 tmux**：在 `Dockerfile` 预装包列表中添加了 `tmux`，防止容器重建时反复检测和在线安装 `tmux`。
+
+### 12. 切换 `agy` 模型运行模式（配置 `AGY_MODEL`）
+*   **现象**：`agy`（Antigravity）默认运行时并非高性能模型（High 模式），且 `botmux` 框架没有原生的接口或变量来定制模型参数。
+*   **实践**：
+    *   **拦截脚本扩展**：修改了容器中 `/root/.local/bin/gemini` 的包装脚本，新增了对 `AGY_MODEL` 环境变量的检测。如果设置了该变量，脚本会在最终执行 `agy` 时自动追加 `--model "${AGY_MODEL}"` 参数。
+    *   **Docker 环境变量注入**：在 `docker-compose.yml` 的 `botmux` 环境变量中默认配置了 `AGY_MODEL=Gemini 3.5 Flash (High)`，从而使飞书机器人后台自动以 High 高性能模型拉起所有 agy 代码会话。
+
 
