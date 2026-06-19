@@ -59,6 +59,8 @@ services:
     environment:
       - HTTP_PROXY=http://clash:7890
       - HTTPS_PROXY=http://clash:7890
+    ports:
+      - "18789:18789"
     volumes:
       - ./config/openclaw:/home/node/.openclaw
     depends_on:

@@ -116,6 +116,22 @@ docker compose up -d
 
 ---
 
+## OpenClaw Control UI 管理后台
+
+OpenClaw 包含一个 Web 图形化管理后台（Control UI），用于日常查看配置、管理运行日志，以及对 **Skill Workshop** 技能提案进行安全审计与审批（如审批/拒绝由 Agent 自动学习并提交的 `SKILL.md` 提案）。
+
+### 1. 访问与登录
+* **访问地址**：`http://<NAS_IP>:18789`（例如：`http://192.168.10.174:18789`）
+* **登录 Token (密码)**：`apple`
+
+### 2. 服务配置说明
+为了确保能在 Mac 的浏览器上直接访问 NAS 的 OpenClaw 后台，本项目配置了以下设置：
+* **网络端口**：在 `docker-compose.yml` 的 `openclaw` 服务中暴露了 `18789:18789` 端口映射。
+* **接口绑定**：在 `openclaw.json` 中配置 `"bind": "lan"`（取代默认的 `loopback` 模式以监听 `0.0.0.0`），从而允许外部网络接入。
+* **访问鉴权**：将 `gateway.auth.token` 配置为密码 `apple` 确保登录鉴权安全。
+
+---
+
 ## 实践记录与排错指引 (Troubleshooting)
 
 为了确保后续维护和迁移的顺利，以下整理了本次部署中解决的所有关键网络、编译与配置报错实践：
