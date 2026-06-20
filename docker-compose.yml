@@ -40,7 +40,7 @@ services:
       - NO_PROXY=localhost,127.0.0.1
       - BOTMUX_DASHBOARD_PORT=7895
       - AGY_MODEL=Gemini 3.5 Flash (High)
-    command: bash -c "botmux start && mkdir -p /root/.botmux/logs /root/.botmux/pm2 && touch /root/.botmux/pm2/pm2.log /root/.botmux/logs/daemon-0-out.log /root/.botmux/logs/dashboard-out.log && tail -f /root/.botmux/pm2/pm2.log /root/.botmux/logs/daemon-0-out.log /root/.botmux/logs/dashboard-out.log"
+    command: bash -c "npm install -g botmux && botmux start && mkdir -p /root/.botmux/logs /root/.botmux/pm2 && touch /root/.botmux/pm2/pm2.log /root/.botmux/logs/daemon-0-out.log /root/.botmux/logs/dashboard-out.log && tail -f /root/.botmux/pm2/pm2.log /root/.botmux/logs/daemon-0-out.log /root/.botmux/logs/dashboard-out.log"
     volumes:
       # Mount configuration files to persist logins
       - ./config/botmux:/root/.botmux
@@ -65,6 +65,19 @@ services:
       - ./config/openclaw:/home/node/.openclaw
     depends_on:
       - clash
+    networks:
+      - ai-network
+
+  # 4. Watchtower (Auto-updates OpenClaw)
+  watchtower:
+    image: docker.1ms.run/containrrr/watchtower:latest
+    container_name: ai-watchtower
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --cleanup --interval 86400 ai-openclaw
+    depends_on:
+      - openclaw
     networks:
       - ai-network
 
