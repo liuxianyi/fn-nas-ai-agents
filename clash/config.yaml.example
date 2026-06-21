@@ -42,6 +42,7 @@ proxy-groups:
     type: url-test
     use:
       - jssrgssr
+    filter: "奥地利" # 可选：用正则表达式过滤订阅节点区域（如"奥地利"），使其与您的落地IP地理位置邻近（当前落地为荷兰），从而避免跨国绕路延迟
     url: "http://www.gstatic.com/generate_204"
     interval: 300
     tolerance: 50
