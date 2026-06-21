@@ -51,6 +51,32 @@ RUN npm install -g botmux @openai/codex
 # Install Antigravity CLI (agy)
 RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 
+# Create the gemini wrapper script to intercept the --yolo flag and support AGY_MODEL
+RUN echo '#!/bin/bash\n\
+args=()\n\
+for arg in "$@"; do\n\
+  if [ "$arg" = "--yolo" ]; then\n\
+    args+=("--dangerously-skip-permissions")\n\
+  else\n\
+    args+=("$arg")\n\
+  fi\n\
+done\n\
+if [ -n "$AGY_MODEL" ]; then\n\
+  has_model=false\n\
+  for a in "${args[@]}"; do\n\
+    if [ "$a" = "--model" ]; then\n\
+      has_model=true\n\
+    fi\n\
+  done\n\
+  if [ "$has_model" = false ]; then\n\
+    exec agy --model "$AGY_MODEL" "${args[@]}"\n\
+  else\n\
+    exec agy "${args[@]}"\n\
+  fi\n\
+else\n\
+  exec agy "${args[@]}"\n\
+fi' > /root/.local/bin/gemini && chmod +x /root/.local/bin/gemini
+
 # Ensure agy is in the PATH for all sessions
 ENV PATH="/root/.local/bin:${PATH}"
 

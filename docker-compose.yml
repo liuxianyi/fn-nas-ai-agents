@@ -46,6 +46,7 @@ services:
       - ./config/botmux:/root/.botmux
       - ./config/config:/root/.config
       - ./config/gemini:/root/.gemini
+      - ./config/codex:/root/.codex
       # Mount your NAS workspace directory where your code projects live (Worker folder)
       - /vol1/1000/Worker:/workspace
     depends_on:
