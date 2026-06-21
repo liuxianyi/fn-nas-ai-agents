@@ -8,21 +8,7 @@ external-controller: 0.0.0.0:9090
 
 proxies:
   # =========================================================================
-  # 1. 前置中转节点 (Your High-Speed Transit Node)
-  # Please replace the following fields with your actual proxy server details.
-  # (e.g. Shadowsocks, Trojan, VMess)
-  # =========================================================================
-  - name: "前置中转代理"
-    type: vmess
-    server: transit-node.example.com
-    port: 12345
-    uuid: your-vmess-uuid-here
-    alterId: 2
-    cipher: auto
-    udp: true
-
-  # =========================================================================
-  # 2. 静态住宅 IP 落地节点 (Your Static Residential Exit IP)
+  # 1. 静态住宅 IP 落地节点 (Your Static Residential Exit IP)
   # Please replace the fields below with your purchased residential IP details.
   # =========================================================================
   - name: "静态IP代理"
@@ -31,12 +17,38 @@ proxies:
     port: 443
     username: "your_username"
     password: "your_password"
-    dialer-proxy: "前置中转代理"
+    dialer-proxy: "Transit-Auto-Select"
+
+proxy-providers:
+  # =========================================================================
+  # 2. 中继订阅源 (Your Transit Node Subscription URL)
+  # Replace the URL below with your actual Clash subscription link.
+  # =========================================================================
+  jssrgssr:
+    type: http
+    url: "https://your-subscription-link-here.com/link/xxxx?clash=1"
+    interval: 86400
+    path: ./subscription.yaml
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
 
 proxy-groups:
   # =========================================================================
+  # 中继自动选择组 (Transit Proxy Group - Auto selects the fastest node from subscription)
+  # =========================================================================
+  - name: "Transit-Auto-Select"
+    type: url-test
+    use:
+      - jssrgssr
+    url: "http://www.gstatic.com/generate_204"
+    interval: 300
+    tolerance: 50
+
+  # =========================================================================
   # 链式代理 (Chain Proxy / Relay Group)
-  # Traffic flows from your NAS -> Transit-Node -> Residential-Exit -> AI API
+  # Traffic flows from your NAS -> Transit-Auto-Select -> Residential-Exit -> AI API
   # =========================================================================
   - name: "AI-Relay-Group"
     type: select
@@ -50,12 +62,15 @@ proxy-groups:
   - name: "Default-Group"
     type: select
     proxies:
-      - "前置中转代理"
+      - "Transit-Auto-Select"
       - "DIRECT"
 
 rules:
   # Route AI platforms through the pure Residential exit
   - DOMAIN-SUFFIX,openai.com,AI-Relay-Group
+  - DOMAIN-SUFFIX,chatgpt.com,AI-Relay-Group
+  - DOMAIN-SUFFIX,oaistatic.com,AI-Relay-Group
+  - DOMAIN-SUFFIX,oaiusercontent.com,AI-Relay-Group
   - DOMAIN-SUFFIX,anthropic.com,AI-Relay-Group
   - DOMAIN-SUFFIX,googleapis.com,AI-Relay-Group
   - DOMAIN-SUFFIX,google.com,AI-Relay-Group
